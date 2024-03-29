@@ -26,7 +26,7 @@ This tool is under active development, with future work focused on variable unst
  
 ## Usage
 5- run the script inside of WW3-tools/unst_msh_gen:
-	$python3 ocn_ww3.p --black_sea [option]
+	$python3 ocn_ww3.py --black_sea [option]
 		
 		option=  3: default which will have the Black Sea and the connections.
 			 2: will have the Balck sea as a seperate basin.
