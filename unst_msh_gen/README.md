@@ -45,5 +45,27 @@ NOTE: The output mesh will have -180:180 longitude, you can convert this by unis
 	output_file_path: shifted mesh in gmsh format with 0:360 long
 
 
+6- Using variable mode:
+	$python3 window_mask.py --windows '[{"min_lon": -98, "max_lon": -64, "min_lat": 24, "max_lat": 44.5, "hshr": 5}'
+
+NOTE: You can define multiple windows with different shoreline resolution (hshr) in json format.
+NOTE: You can define different background mesh based on lat location in the window_mask.py:
+		
+	 # Define the boundaries and scaling values
+   	 upper_bound = 50
+    	 middle_bound = -20
+    	 lower_bound = -90
+    	 scale_north = 9
+    	 scale_middle = 20
+    	 scale_south_upper = 30
+    	 scale_south_lower = 9
+	
+NOTE: The output will be wmask.nc file which will have the mesh spacing info.
+
+
+        $python3 ocn_ww3.py --black_sea [option] --mask_file="wmask.nc"
+
+NOTE: This will create the variable mesh based on specified mesh spacing file.
+
 ## Contributing
 This is ongoing effort with the great help of Darren Engwirda, JIGSAW developer.
