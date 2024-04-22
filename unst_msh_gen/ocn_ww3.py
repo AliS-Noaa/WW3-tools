@@ -51,9 +51,9 @@ def create_msh():
 
     print("*create-msh...")
 
-    opts.geom_file = "geom.msh"
-    opts.hfun_file = "spac.msh"
-    opts.jcfg_file = "opts.jig"
+    opts.geom_file = "geom.msh"  #saves the geometry info for jigsaw
+    opts.hfun_file = "spac.msh"  #saves the final mesh spacing info 
+    opts.jcfg_file = "opts.jig"  #jigsaw ctlr file
     
     geom.mshID = "ellipsoid-mesh"
     geom.radii = np.full(
@@ -68,12 +68,12 @@ def create_msh():
     # solve |dh/dx| constraints in spacing
     jigsawpy.cmd.marche(opts, spac)
     
-    opts.mesh_file = "uglo_100km_BlkS.msh"
+    opts.mesh_file = "uglo_100km_BlkS.msh"  #jigsaw format mesh file
     
     opts.hfun_scal = "absolute"
-    opts.hfun_hmax = 100.           # uniform at 30.km
+    opts.hfun_hmax = 100.           # global maximum mesh resolution (similar to hmax)
     opts.mesh_dims = +2             # 2-dim. simplexes
-    opts.optm_iter = +64
+    opts.optm_iter = +64            # number of itereation for the optimization
     opts.optm_cost = "skew-cos"
 
     jigsawpy.cmd.jigsaw(opts, mesh)
@@ -81,13 +81,13 @@ def create_msh():
     
 def create_siz():
 
-#-- create mesh spacing function for the globe
+    #-- create mesh spacing function for the globe: for uniform mesh hmax = hshr = hmin
 
-    hmax = 100.0 # maximum spacing [km]
+    hmax = 100.0 # maximum spacing [km] 
     hshr = 100  # shoreline spacing
     nwav = 400.  # number of cells per sqrt(g*H)
     hmin = 100.0  # minimum spacing
-    dhdx = 0.05  # allowable spacing gradient
+    dhdx = 0.05  # allowable spacing gradient: for more gradual transition use lower value
 
     data = nc.Dataset(
         "RTopo_2_0_4_GEBCO_v2023_60sec_pixel.nc", "r")
@@ -527,7 +527,7 @@ if (__name__ == "__main__"):
     point = jigsawpy.R3toS2(geom.radii, point)  # to [lon,lat] in deg
     point*= 180. / np.pi
     depth = np.reshape(-1*mesh.value, (mesh.value.size, 1))
-    depth[depth <= 0] = 2
+    depth[depth <= 0] = 50
     point = np.hstack((point, depth))  # append elev. as 3rd coord.
     cells = [("triangle", mesh.tria3["index"])]
     tri_data=cells[0][1]+1

@@ -29,14 +29,14 @@ def create_mask_file(windows):
     # Initialize scal with a default condition
     #scal = np.where(ymat > 50, 9, np.where(ymat < -20, 30, 20))
 
-    # Define the boundaries and scaling values
-    upper_bound = 50
-    middle_bound = -20
-    lower_bound = -90
-    scale_north = 9
-    scale_middle = 20
-    scale_south_upper = 30
-    scale_south_lower = 9
+    # Define the boundaries and scaling values: The globe is divided to three regions based on latitude and corresponding resolutions
+    upper_bound = 50       # for lat > 50N
+    middle_bound = -20     # for -20S < lat < 50N
+    lower_bound = -90      # for lat < -20S
+    scale_north = 9        # mesh resolution for lat < 50N 
+    scale_middle = 20      # mesh resolution for -20S< lat <50N
+    scale_south_upper = 30 # mesh resolution linearly decreasing from 30km at -20S to
+    scale_south_lower = 9  # 9km mesh resolution at -90S
 
     # Calculate the scaling using conditions
     scal = np.where(ymat > upper_bound,
