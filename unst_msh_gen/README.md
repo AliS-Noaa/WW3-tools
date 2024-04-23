@@ -11,10 +11,17 @@ This tool is under active development, with future work focused on variable unst
 ## 1- Install jigsawpy (https://github.com/dengwirda/jigsaw-python)
 
 ## 2- you need following packages:
-- numpy
 - scipy
 - packaging
 - netcdf4
+- imageio
+- scikit-image
+- tifffile
+- certifi
+- cftime
+- network
+- pillow
+- setuptools
 
 ## 3- clone the repo
 - $git clone https://github.com/NOAA-EMC/WW3-tools
