@@ -2,7 +2,7 @@
 """ Jigsaw meshes for WW3 with global bathymetry
 """
 
-# Authors: Ali Salimi, Darren
+# Authors: Ali Salimi-Tarazouj, Darren Engwirda
 
 # The DEM file used below can be found at:	
 # https://github.com/dengwirda/dem/releases/tag/v0.1.1

@@ -59,6 +59,12 @@ NOTE: The output mesh will have -180:180 longitude, you can convert this by unis
 
 NOTE: hshr is the shoreline resolution which can be smaller than the hmin which is defined globally.
 
+- window_mask.py can read shapefiles in json format as well and assign user defined resolution (scale) to each polygon.
+
+- $python3 window_mask.py --shapefiles '[{"path": "./Shapefiles/Arctic.shp", "scale": 10}, {"path": "./Shapefiles/Gulf.shp", "scale": 5}, {"path": "./Shapefiles/Hawaii.shp", "scale": 5}, {"path": "./Shapefiles/PurtoRico.shp", "scale": 10}, {"path": "./Shapefiles/WestCoast.shp", "scale": 5}]'
+
+NOTE: You can create multiple shapefiles using QGIS or ArcGIS and save them in ./Shapefiles directory and assign different resolution (scale) to each polygone.
+
 NOTE: You can define different background mesh based on lat location in the window_mask.py:
 		
 NOTE: for the background mesh you can define different resolution (for eaxmple, the globe is divided to three regions based on latitude and corresponding resolutions: 
@@ -82,4 +88,4 @@ NOTE:To create the variable mesh based on specified mesh spacing file in "wmask.
 
 
 ## Contributing
-This is ongoing effort with the great help of Darren Engwirda, JIGSAW developer.
+This is ongoing effort by Ali Salimi-Tarazouj with the great help of Darren Engwirda, JIGSAW developer.
