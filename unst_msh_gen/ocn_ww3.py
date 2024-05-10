@@ -2,11 +2,13 @@
 """ Jigsaw meshes for WW3 with global bathymetry
 """
 
-# Authors: Ali Salimi, Darren
+# Authors: Ali Salimi-Tarazouj, Darren Engwirda
 
 # The DEM file used below can be found at:	
 # https://github.com/dengwirda/dem/releases/tag/v0.1.1
+import os
 import argparse
+import configparser
 import numpy as np
 import netCDF4 as nc
 
@@ -18,17 +20,20 @@ from scipy.sparse.csgraph import connected_components
 
 from spacing import *
 
+# Load the configuration file
+config = configparser.ConfigParser()
+config.read('config.ini')
+
 # Create the parser
 parser = argparse.ArgumentParser(description="Run mesh gen with specific region settings.")
 
-# Add an argument for the black_sea option
-parser.add_argument('--black_sea', type=int, default=3,
+# Command-line arguments with defaults from config file
+parser.add_argument('--black_sea', type=int, default=config.getint('CommandLineArgs', 'black_sea'),
                     help='Set the region mode: 1 no black-sea, 2 black-sea detached, 3 black-sea with connections. Default is 3.')
 
-
-# Add an argument for the mask_file
-parser.add_argument('--mask_file', type=str, default='',
+parser.add_argument('--mask_file', type=str, default=config.get('CommandLineArgs', 'mask_file', fallback=''),
                     help='Path to the mask file, if any. Leave empty if not used.')
+
 
 # Parse the command-line arguments
 args = parser.parse_args()
@@ -68,10 +73,10 @@ def create_msh():
     # solve |dh/dx| constraints in spacing
     jigsawpy.cmd.marche(opts, spac)
     
-    opts.mesh_file = "uglo_100km_BlkS.msh"  #jigsaw format mesh file
+    opts.mesh_file = config['MeshSettings']['mesh_file']  #jigsaw format mesh file
     
     opts.hfun_scal = "absolute"
-    opts.hfun_hmax = 100.           # global maximum mesh resolution (similar to hmax)
+    opts.hfun_hmax = float(config['MeshSettings']['hfun_hmax'])           # global maximum mesh resolution (similar to hmax)
     opts.mesh_dims = +2             # 2-dim. simplexes
     opts.optm_iter = +64            # number of itereation for the optimization
     opts.optm_cost = "skew-cos"
@@ -83,14 +88,16 @@ def create_siz():
 
     #-- create mesh spacing function for the globe: for uniform mesh hmax = hshr = hmin
 
-    hmax = 100.0 # maximum spacing [km] 
-    hshr = 100  # shoreline spacing
-    nwav = 400.  # number of cells per sqrt(g*H)
-    hmin = 100.0  # minimum spacing
-    dhdx = 0.05  # allowable spacing gradient: for more gradual transition use lower value
+    hmax = float(config['Spacing']['hmax']) # maximum spacing [km] 
+    hshr = float(config['Spacing']['hshr'])  # shoreline spacing
+    nwav = int(config['Spacing']['nwav'])  # number of cells per sqrt(g*H)
+    hmin = float(config['Spacing']['hmin'])  # minimum spacing
+    dhdx = float(config['Spacing']['dhdx'])  # allowable spacing gradient: for more gradual transition use lower value
 
-    data = nc.Dataset(
-        "RTopo_2_0_4_GEBCO_v2023_60sec_pixel.nc", "r")
+    # Load the DEM file from the config
+    dem_file = config['DataFiles']['dem_file']
+
+    data = nc.Dataset(dem_file,"r")
 
     xlon = np.asarray(data["lon"][:])
     ylat = np.asarray(data["lat"][:])
@@ -176,8 +183,10 @@ def inject_dem():
 
     print("*inject-dem...")
 
-    data = nc.Dataset(
-        "RTopo_2_0_4_GEBCO_v2023_60sec_pixel.nc", "r")
+        # Load the DEM file from the config
+    dem_file = config['DataFiles']['dem_file']
+
+    data = nc.Dataset(dem_file,"r")
 
     xlon = np.asarray(data["lon"][:])
     ylat = np.asarray(data["lat"][:])
@@ -531,5 +540,6 @@ if (__name__ == "__main__"):
     point = np.hstack((point, depth))  # append elev. as 3rd coord.
     cells = [("triangle", mesh.tria3["index"])]
     tri_data=cells[0][1]+1
-    write_gmsh_mesh("uglo_100km_BlkS.ww3", point, tri_data)
+    ww3_mesh_file = config['MeshSettings']['ww3_mesh_file']
+    write_gmsh_mesh(ww3_mesh_file, point, tri_data)
    
