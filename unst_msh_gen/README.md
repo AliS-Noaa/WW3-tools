@@ -38,9 +38,9 @@ This tool is under active development, with future work focused on variable unst
 - Specify the DEM netcdf file using the 'dem_file' in "DataFiles" section.
 - For uniform resolution 'hmax' = 'hmin' = 'hshr' = 'hfun_max' and 'nwave' = 0 in "Spacing" section.
 - To include or exclude Black-Sea change 'black_sea' in "CommandLineArg" section to:
-- 	                  3: will have the Black Sea and the connections.
--                         2: will have the Balck sea as a seperate basin.
--                         1: will exclude the Black sea
+- 3 will have the Black Sea and the connections.
+- 2 will have the Balck sea as a seperate basin.
+- 1 will exclude the Black sea
 -
 - you can specify the mesh name (jigsaw format or ww3 format) using 'mesh_file' and 'ww3_mesh_file'in "MeshSetting" section 
 
@@ -56,15 +56,11 @@ NOTE: The output mesh will have -180:180 longitude, you can convert this by unis
 ## 6- Using variable mode:
 
 ## modify config.ini
-- To create a mesh with finer resolution near the US coastlines you can define different region in json format (east coast, west coast and golf od Mexico, Purto Rico, and Hawaii); use the 'window_file' in the "DataFiles" section to specify the windows or parse the windows as;
-
-- $python3 window_mask.py --windows '[{"min_lon": -98, "max_lon": -64, "min_lat": 24, "max_lat": 44.5, "hshr": 5}, {"min_lon": -158, "max_lon": -155, "min_lat": 19, "max_lat": 22, "hshr": 5}, {"min_lon": -128, "max_lon": -64, "min_lat": 34.5, "max_lat": 48.5, "hshr": 5}, {"min_lon": -67.4, "max_lon": -64.1, "min_lat": 17.2, "max_lat": 18.3, "hshr": 5}]'
+- To create a mesh with finer resolution near the US coastlines you can define different region in json format (east coast, west coast and golf od Mexico, Purto Rico, and Hawaii); use the 'window_file' in the "DataFiles" section to specify the windows.
 
 NOTE: hshr is the shoreline resolution which can be smaller than the hmin which is defined globally.
 
-- window_mask.py can read shapefiles in json format as well and assign user defined resolution (scale) to each polygon; use the 'shape_file' in the "DataFiles" to specify the shapefiles or parse the shapefiles as;
-
-- $python3 window_mask.py --shapefiles '[{"path": "./Shapefiles/Arctic.shp", "scale": 10}, {"path": "./Shapefiles/Gulf.shp", "scale": 5}, {"path": "./Shapefiles/Hawaii.shp", "scale": 5}, {"path": "./Shapefiles/PurtoRico.shp", "scale": 10}, {"path": "./Shapefiles/WestCoast.shp", "scale": 5}]'
+- window_mask.py can read shapefiles in json format as well and assign user defined resolution (scale) to each polygon; use the 'shape_file' in the "DataFiles" to specify the shapefiles.
 
 NOTE: You can create multiple shapefiles using QGIS or ArcGIS and save them in ./Shapefiles directory and assign different resolution (scale) to each polygone.
 

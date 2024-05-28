@@ -3,7 +3,9 @@
 """
 Created on Fri Apr 19 15:17:57 2024
 
-@author: Ali.Salimi-Tarazouj
+@author: Ali Salimi-Tarazouj
+
+This script originally was developed by Steven Brus (@sbrus89) and revised by Ali Salimi-Tarazouj to work efficiently for very high resolution meshes
 """
 
 import numpy as np

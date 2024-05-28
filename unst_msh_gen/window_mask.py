@@ -1,7 +1,7 @@
 """ Jigsaw meshes for WW3 with global bathymetry
 """
 
-# Authors: Ali Salimi-Tarazouj
+# Authors: Ali Salimi-Tarazouj, Darren Engwirda
 
 # This script will create mesh spacing based on user defined windows in json format or based on polygons in shapefile format
 
@@ -13,9 +13,32 @@ import json
 import geopandas as gpd
 from shapely.geometry import Point
 
-# Load the configuration file
-config = configparser.ConfigParser()
-config.read('config.ini')
+def parse_input_args():
+    parser = argparse.ArgumentParser(description='Create a mask file with multiple methods.')
+    parser.add_argument('--config', type=str, required=True, help='Path to the configuration file.')
+    args = parser.parse_args()
+    return args
+
+def load_configuration(config_path):
+    config = configparser.ConfigParser()
+    config.read(config_path)
+    try:
+        windows = json.loads(config['DataFiles']['window_file']) if 'window_file' in config['DataFiles'] else None
+    except json.JSONDecodeError:
+        print("Error parsing windows data")
+        windows = None
+
+    try:
+        shapefiles = json.loads(config['DataFiles']['shape_file']) if 'shape_file' in config['DataFiles'] else None
+    except json.JSONDecodeError:
+        print("Error parsing shapefiles data")
+        shapefiles = None
+
+    if shapefiles:
+        shapefiles = [(shp['path'], shp['scale']) for shp in shapefiles]
+
+    dem_file = config['DataFiles']['dem_file'] if 'dem_file' in config['DataFiles'] else None
+    return windows, shapefiles, dem_file
 
 def create_mask_file(data_filename, output_filename, windows=None, shapefiles=None, default_scale=20):
     # Load DEM data
@@ -30,6 +53,9 @@ def create_mask_file(data_filename, output_filename, windows=None, shapefiles=No
     xmat, ymat = np.meshgrid(xmid, ymid)
 
     # Scaling settings from the config file
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+
     upper_bound = float(config['ScalingSettings']['upper_bound'])
     middle_bound = float(config['ScalingSettings']['middle_bound'])
     lower_bound = float(config['ScalingSettings']['lower_bound'])
@@ -50,7 +76,7 @@ def create_mask_file(data_filename, output_filename, windows=None, shapefiles=No
             window_mask_lon = np.logical_and(xmat >= window["min_lon"], xmat <= window["max_lon"])
             window_mask_lat = np.logical_and(ymat >= window["min_lat"], ymat <= window["max_lat"])
             window_mask = np.logical_and(window_mask_lon, window_mask_lat)
-            
+
             mask_elevation = np.logical_and(elev >= -4., elev <= +8.)
             mask_final = np.logical_and(mask_elevation, window_mask)
             scal[mask_final] = window["hshr"]
@@ -89,57 +115,8 @@ def create_mask_file(data_filename, output_filename, windows=None, shapefiles=No
     var[:, :] = scal
     data_out.close()
 
-def parse_input_args():
-    parser = argparse.ArgumentParser(description='Create a mask file with multiple methods.')
-    parser.add_argument('--windows', type=str, help='JSON string with window definitions.')
-    parser.add_argument('--shapefiles', type=str, help='JSON string with shapefile paths and scales.')
-    args = parser.parse_args()
-
-    # Configuration setup
-    config = configparser.ConfigParser()
-    config.read('config.ini')
-
-    # Decide where to load windows from
-    if args.windows:
-        windows = json.loads(args.windows)
-    elif 'window_file' in config['DataFiles']:  # Make sure the 'window_file' key exists in 'DataFiles' section
-        windows = json.loads(config['DataFiles']['window_file'])
-    else:
-        windows = None  # Default to None if no command line input or config entr
-
-    # Decide where to load shapefiles from
-    if args.shapefiles:
-        shapefiles = json.loads(args.shapefiles)
-    elif 'shape_file' in config['DataFiles']:  # Ensure 'shape_file' key exists in 'DataFiles' section
-        shapefiles = json.loads(config['DataFiles']['shape_file'])
-    else:
-        shapefiles = None
-
-    if shapefiles:
-        shapefiles = [(shp['path'], shp['scale']) for shp in shapefiles]
-        print("Parsed Shapefiles:", shapefiles)  # Debugging print
-
-
-    #windows = json.loads(args.windows) if args.windows else None
-    #shapefiles = json.loads(args.shapefiles) if args.shapefiles else None
-
-    return windows, shapefiles
-
 if __name__ == "__main__":
-    windows, shapefiles = parse_input_args()
-    """
-    # Fallback to hardcoded shapefiles if none provided via command line
-    if not shapefiles:
-        shapefiles = [
-            ("./Shapefiles/Arctic.shp", 10),
-            ("./Shapefiles/Gulf.shp", 5),
-            ("./Shapefiles/Hawaii.shp", 5),
-            ("./Shapefiles/PurtoRico.shp", 10),
-            ("./Shapefiles/WestCoast.shp", 5)
-        ]
-    """
-    # Load DEM file path from the config file
-    dem_file = config['DataFiles']['dem_file']
-
+    args = parse_input_args()
+    windows, shapefiles, dem_file = load_configuration(args.config)
     create_mask_file(dem_file, "wmask.nc", windows, shapefiles)
 
