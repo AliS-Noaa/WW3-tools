@@ -34,17 +34,16 @@ This tool is under active development, with future work focused on variable unst
 # Usage
 ## 5- run the script inside of WW3-tools/unst_msh_gen:
 
-## modify config.init
+- modify config.init:
 - Specify the DEM netcdf file using the 'dem_file' in "DataFiles" section.
 - For uniform resolution 'hmax' = 'hmin' = 'hshr' = 'hfun_max' and 'nwave' = 0 in "Spacing" section.
 - To include or exclude Black-Sea change 'black_sea' in "CommandLineArg" section to:
-- 3 will have the Black Sea and the connections.
-- 2 will have the Balck sea as a seperate basin.
-- 1 will exclude the Black sea
--
+- 	3 will have the Black Sea and the connections.
+- 	2 will have the Balck sea as a seperate basin.
+- 	1 will exclude the Black sea
 - you can specify the mesh name (jigsaw format or ww3 format) using 'mesh_file' and 'ww3_mesh_file'in "MeshSetting" section 
 
-- $python3 ocn_ww3.py
+- $python3 ocn_ww3.py --config config.ini
 
 NOTE: the output will be gmsh format which will be used by WW3 (specified by 'ww3_mesh_file')
 
@@ -55,7 +54,7 @@ NOTE: The output mesh will have -180:180 longitude, you can convert this by unis
 
 ## 6- Using variable mode:
 
-## modify config.ini
+- modify config.ini
 - To create a mesh with finer resolution near the US coastlines you can define different region in json format (east coast, west coast and golf od Mexico, Purto Rico, and Hawaii); use the 'window_file' in the "DataFiles" section to specify the windows.
 
 NOTE: hshr is the shoreline resolution which can be smaller than the hmin which is defined globally.
@@ -77,13 +76,15 @@ NOTE: for the background mesh you can define different resolution (for eaxmple, 
 - #Mesh resolution of the lower section is linear from scale_south_upper to scale_south_upper
 - scale_south_upper = 30    # km resolution for upper south/lower section 
 - scale_south_lower = 9     # km mesh resolution at lower south/lower section 
+
+- $python3 window_mask.py --config config.ini
 	
 NOTE: The output will be "wmask.nc" file which will have the mesh spacing info.
 
 
 NOTE:To create the variable mesh based on mesh spacing file "wmask.nc", in the config.ini change the mask_file = wmask.nc
 
-- $python3 ocn_ww3.py
+- $python3 ocn_ww3.py --config config.ini
 
 
 ## 7- Plotting the mesh info:

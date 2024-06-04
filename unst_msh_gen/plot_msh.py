@@ -20,6 +20,20 @@ import argparse
 
 
 def read_gmsh(filename):
+    #purpose: this function reads a gmsh file and returns node and element information
+    # additional information about the gmsh file format can be found
+    # in many places including here: http://gmsh.info/dev/doc/texinfo/gmsh.pdf
+    # The gmsh format is what the WW3 model uses to define unstructured grids
+
+    #input:
+    # filename - name of gmsh file
+
+    #output:
+    #xy    -  x/y or lon/lat of nodes
+    #depth - depth value at node points
+    #ect   - element connection table
+    #bnd   - list of boundary nodes
+
     with open(filename, 'r') as f:
         # Skip mesh format lines
         for _ in range(4):  # Skip 4 lines directly (including $Nodes)
@@ -69,6 +83,18 @@ def read_gmsh(filename):
     return xy, depth, ect, bnd
 
 def calc_elm_size(xy, ect):
+
+    #purpose: Calculate element size, by calculating the distance between each node on the triangle, then
+   # saving the minimum or maximum distance for each node
+
+   #input:
+   # xy  -  x/y or lon/lat of nodes
+   # ect - element connection table
+
+   #output:
+   # distmin(number of nodes)  - the minimum distance between this node and any connected node point
+   # distmax(number of nodes)  - the maximum distance between this node and any connected node point
+
     nn = len(xy)
     ne = len(ect)
     radiusofearth = 6378.137  # radius of earth at equator

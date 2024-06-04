@@ -38,7 +38,10 @@ def load_configuration(config_path):
         shapefiles = [(shp['path'], shp['scale']) for shp in shapefiles]
 
     dem_file = config['DataFiles']['dem_file'] if 'dem_file' in config['DataFiles'] else None
-    return windows, shapefiles, dem_file
+
+    scaling_settings = {key: float(value) for key, value in config['ScalingSettings'].items()} if 'ScalingSettings' in config else {}
+
+    return windows, shapefiles, dem_file, scaling_settings
 
 def create_mask_file(data_filename, output_filename, windows=None, shapefiles=None, default_scale=20):
     # Load DEM data
@@ -53,16 +56,14 @@ def create_mask_file(data_filename, output_filename, windows=None, shapefiles=No
     xmat, ymat = np.meshgrid(xmid, ymid)
 
     # Scaling settings from the config file
-    config = configparser.ConfigParser()
-    config.read('config.ini')
+    upper_bound = scaling_settings.get('upper_bound')
+    middle_bound = scaling_settings.get('middle_bound')
+    lower_bound = scaling_settings.get('lower_bound')
+    scale_north = scaling_settings.get('scale_north')
+    scale_middle = scaling_settings.get('scale_middle')
+    scale_south_upper = scaling_settings.get('scale_south_upper')
+    scale_south_lower = scaling_settings.get('scale_south_lower')
 
-    upper_bound = float(config['ScalingSettings']['upper_bound'])
-    middle_bound = float(config['ScalingSettings']['middle_bound'])
-    lower_bound = float(config['ScalingSettings']['lower_bound'])
-    scale_north = float(config['ScalingSettings']['scale_north'])
-    scale_middle = float(config['ScalingSettings']['scale_middle'])
-    scale_south_upper = float(config['ScalingSettings']['scale_south_upper'])
-    scale_south_lower = float(config['ScalingSettings']['scale_south_lower'])
 
     # Apply scaling based on latitude bands
     scal = np.where(ymat > upper_bound, scale_north,
@@ -117,6 +118,6 @@ def create_mask_file(data_filename, output_filename, windows=None, shapefiles=No
 
 if __name__ == "__main__":
     args = parse_input_args()
-    windows, shapefiles, dem_file = load_configuration(args.config)
+    windows, shapefiles, dem_file, scaling_settings = load_configuration(args.config)
     create_mask_file(dem_file, "wmask.nc", windows, shapefiles)
 

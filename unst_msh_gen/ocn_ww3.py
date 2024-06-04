@@ -20,27 +20,31 @@ from scipy.sparse.csgraph import connected_components
 
 from spacing import *
 
-# Load the configuration file
-config = configparser.ConfigParser()
-config.read('config.ini')
+def parse_input_args():
+    parser = argparse.ArgumentParser(description='Create a mask file with multiple methods.')
+    parser.add_argument('--config', type=str, required=True, help='Path to the configuration file.')
+    args = parser.parse_args()
+    return args
 
-# Create the parser
-parser = argparse.ArgumentParser(description="Run mesh gen with specific region settings.")
+def load_configuration(config_path):
+    config = configparser.ConfigParser()
+    config.read(config_path)
 
-# Command-line arguments with defaults from config file
-parser.add_argument('--black_sea', type=int, default=config.getint('CommandLineArgs', 'black_sea'),
-                    help='Set the region mode: 1 no black-sea, 2 black-sea detached, 3 black-sea with connections. Default is 3.')
-
-parser.add_argument('--mask_file', type=str, default=config.get('CommandLineArgs', 'mask_file', fallback=''),
-                    help='Path to the mask file, if any. Leave empty if not used.')
-
-
-# Parse the command-line arguments
-args = parser.parse_args()
-
-# Use args.black_sea to access the black_sea value
-
-
+        # Creating a dictionary and populating it with configuration settings
+    configurations = {
+        'mesh_file': config.get('MeshSettings', 'mesh_file', fallback=''),
+        'ww3_mesh_file':config.get('MeshSettings', 'WW3_mesh_file', fallback=''),
+        'hfun_hmax': float(config.get('MeshSettings', 'hfun_hmax', fallback='100')),
+        'black_sea': config.getint('CommandLineArgs', 'black_sea', fallback=3),
+        'mask_file': config.get('CommandLineArgs', 'mask_file', fallback=''),
+        'hmax': float(config.get('Spacing', 'hmax', fallback='100.0')),
+        'hshr': float(config.get('Spacing', 'hshr', fallback='100')),
+        'nwav': int(config.get('Spacing', 'nwav', fallback='400')),
+        'hmin': float(config.get('Spacing', 'hmin', fallback='100.0')),
+        'dhdx': float(config.get('Spacing', 'dhdx', fallback='0.05')),
+        'dem_file': config.get('DataFiles', 'dem_file', fallback='')
+    }
+    return configurations
 
 ISOLATED = 30000.  # min surface area [km^2]
 
@@ -53,6 +57,9 @@ opts = jigsawpy.jigsaw_jig_t()
 def create_msh():
 
 #-- create a simple uniform mesh for the globe
+    
+    args = parse_input_args()
+    configurations = load_configuration(args.config)
 
     print("*create-msh...")
 
@@ -73,10 +80,10 @@ def create_msh():
     # solve |dh/dx| constraints in spacing
     jigsawpy.cmd.marche(opts, spac)
     
-    opts.mesh_file = config['MeshSettings']['mesh_file']  #jigsaw format mesh file
+    opts.mesh_file = configurations['mesh_file']  #jigsaw format mesh file
     
     opts.hfun_scal = "absolute"
-    opts.hfun_hmax = float(config['MeshSettings']['hfun_hmax'])           # global maximum mesh resolution (similar to hmax)
+    opts.hfun_hmax = configurations['hfun_hmax']           # global maximum mesh resolution (similar to hmax)
     opts.mesh_dims = +2             # 2-dim. simplexes
     opts.optm_iter = +64            # number of itereation for the optimization
     opts.optm_cost = "skew-cos"
@@ -86,16 +93,19 @@ def create_msh():
     
 def create_siz():
 
+    args = parse_input_args()
+    configurations = load_configuration(args.config)
+
     #-- create mesh spacing function for the globe: for uniform mesh hmax = hshr = hmin
 
-    hmax = float(config['Spacing']['hmax']) # maximum spacing [km] 
-    hshr = float(config['Spacing']['hshr'])  # shoreline spacing
-    nwav = int(config['Spacing']['nwav'])  # number of cells per sqrt(g*H)
-    hmin = float(config['Spacing']['hmin'])  # minimum spacing
-    dhdx = float(config['Spacing']['dhdx'])  # allowable spacing gradient: for more gradual transition use lower value
-
+    hmax = configurations['hmax'] # maximum spacing [km] 
+    hshr = configurations['hshr']   # shoreline spacing
+    nwav = configurations['nwav']   # number of cells per sqrt(g*H)
+    hmin = configurations['hmin']  # minimum spacing
+    dhdx = configurations['dhdx']  # allowable spacing gradient: for more gradual transition use lower value
+    mask_file = configurations['mask_file'] #user defined scaling file
     # Load the DEM file from the config
-    dem_file = config['DataFiles']['dem_file']
+    dem_file = configurations['dem_file']
 
     data = nc.Dataset(dem_file,"r")
 
@@ -127,8 +137,9 @@ def create_siz():
    
 #-- apply user-defined scaling: multiply h(x) by mask array
 
-    if hasattr(args, 'mask_file') and args.mask_file:
-       hmat = scale_spacing_via_mask(args, hmat)
+    if mask_file:
+        hmat = scale_spacing_via_mask(args, hmat)
+        print("Scaling applied using mask_file:", mask_file)
     else:
     # Handle case where mask_file is not provided
         print("No mask file provided. Proceeding without scaling...")
@@ -179,12 +190,15 @@ def create_siz():
 
 def inject_dem():
 
+    args = parse_input_args()
+    configurations = load_configuration(args.config)
+
 #-- remap a DEM on to the vertices of the mesh
 
     print("*inject-dem...")
 
         # Load the DEM file from the config
-    dem_file = config['DataFiles']['dem_file']
+    dem_file = configurations['dem_file']
 
     data = nc.Dataset(dem_file,"r")
 
@@ -337,7 +351,10 @@ def filter_wet(mesh, mask):
     return mask
 
 
-def filter_ocn(black_sea=args.black_sea):
+def filter_ocn():
+
+    args = parse_input_args()
+    configurations = load_configuration(args.config)
 
 #-- use the remapped elev. to keep ocean cells
 
@@ -428,6 +445,7 @@ def filter_ocn(black_sea=args.black_sea):
         mesh.smids[:, 0] <= blacksea_lon_max
     ))
     
+    black_sea = configurations['black_sea']
         # Activate regions based on black_sea option
     if black_sea == 1:  # Caspian and Black Sea
         surf[caspian_region] = -9999.0
@@ -525,6 +543,9 @@ def write_gmsh_mesh(filename, node_data, tri):
 
 if (__name__ == "__main__"):
 
+    args = parse_input_args()
+    configurations = load_configuration(args.config)
+
     create_msh()
     inject_dem()
     filter_ocn()
@@ -536,10 +557,9 @@ if (__name__ == "__main__"):
     point = jigsawpy.R3toS2(geom.radii, point)  # to [lon,lat] in deg
     point*= 180. / np.pi
     depth = np.reshape(-1*mesh.value, (mesh.value.size, 1))
-    depth[depth <= 0] = 50
+    depth[depth <= -2] = 50
     point = np.hstack((point, depth))  # append elev. as 3rd coord.
     cells = [("triangle", mesh.tria3["index"])]
     tri_data=cells[0][1]+1
-    ww3_mesh_file = config['MeshSettings']['ww3_mesh_file']
+    ww3_mesh_file = configurations['ww3_mesh_file']
     write_gmsh_mesh(ww3_mesh_file, point, tri_data)
-   
