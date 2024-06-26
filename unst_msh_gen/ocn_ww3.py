@@ -170,8 +170,12 @@ def create_siz():
 
     ymid = 41.5 * np.pi / 180.
     xmid = 30.5 * np.pi / 180.
-        
-    spac.value = hmat 
+
+    zoom = +100.0 - 99.0 * np.exp(-(
+        6.75 * (xmat - xmid) ** 2 +
+        12.5 * (ymat - ymid) ** 2) ** 2)
+    
+    spac.value = hmat*zoom 
     spac.slope = np.array(dhdx)
     spac.value = np.minimum(hmax, spac.value)
     
