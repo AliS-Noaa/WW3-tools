@@ -561,7 +561,7 @@ if (__name__ == "__main__"):
     point = jigsawpy.R3toS2(geom.radii, point)  # to [lon,lat] in deg
     point*= 180. / np.pi
     depth = np.reshape(-1*mesh.value, (mesh.value.size, 1))
-    depth[depth <= -2] = 50
+    depth[depth <= 0] = 2
     point = np.hstack((point, depth))  # append elev. as 3rd coord.
     cells = [("triangle", mesh.tria3["index"])]
     tri_data=cells[0][1]+1
