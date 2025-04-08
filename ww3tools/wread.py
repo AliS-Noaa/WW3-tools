@@ -77,7 +77,6 @@ import warnings; warnings.filterwarnings("ignore")
 import tarfile
 import math
 
-
 def readconfig(fname):
     """
     Reads the configuration file ww3tools.yaml and returns a dictionary
@@ -1619,8 +1618,6 @@ def spec_ww3(*args):
     del mtime,mdate,lat,lon,wnds,wndd,freq,freq1,freq2,dfreq,pwst,dire,d1sp,dspec
 
 
-
-
 def spec1_ww3(*args):
     '''
     WAVEWATCH III, wave spectrum, netcdf (.nc) or text (.spec) format
@@ -1800,3 +1797,4 @@ def spec1_ww3(*args):
                 continue
 
     return results
+

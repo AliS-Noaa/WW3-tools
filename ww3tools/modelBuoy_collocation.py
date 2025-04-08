@@ -153,41 +153,45 @@ cyclonemap = None
 wlist = []
 ftag = ''
 
-# Function to unzip and untar files
+
 def unzip_and_untar(gz_file, output_dir):
+    """
+    Extracts a .tar.gz file, lists extracted files, and creates an ID file.
+
+    :param gz_file: Path to the .tar.gz file
+    :param output_dir: Directory where files will be extracted
+    :return: (Path to extracted folder, list of extracted files, list of IDs)
+    """
     try:
-        file_name = os.path.splitext(os.path.basename(gz_file))[0]
-        base_name = file_name.rsplit('.', 1)[0]
-        output_file = os.path.join(output_dir, file_name)
+        # Ensure output directory exists
+        os.makedirs(output_dir, exist_ok=True)
 
-        with gzip.open(gz_file, 'rb') as f_in:
-            with open(output_file, 'wb') as f_out:
-                f_out.write(f_in.read())
-
+        # Get base name without extensions
+        base_name = os.path.splitext(os.path.basename(gz_file))[0].rsplit('.', 1)[0]
         extracted_folder = os.path.join(output_dir, base_name)
 
-        with tarfile.open(output_file, 'r') as tar:
-            tar.extractall(extracted_folder)
+        # Extract .tar.gz in-memory to avoid redundant file writes
+        with gzip.open(gz_file, 'rb') as f_in:
+            with tarfile.open(fileobj=f_in, mode='r') as tar:
+                tar.extractall(extracted_folder)
 
-        # Creating a list of the extracted files
-        list_file = os.path.join(output_dir, f'{base_name}_contents.txt')
-        with open(list_file, 'w') as f:
-            for root, dirs, files in os.walk(extracted_folder):
-                for file in files:
-                    f.write(os.path.join(root, file) + '\n')
+        list_file_path = os.path.join(output_dir, f"{base_name}_contents.txt")
+        id_file_path = os.path.join(output_dir, f"{base_name}_id.txt")
 
-        # Creating a list of ids between two dots in the filenames
-        id_file = os.path.join(output_dir, f'{base_name}_id.txt')
-        with open(id_file, 'w') as f:
-            for root, dirs, files in os.walk(extracted_folder):
+        # Use a single walk-through to generate both files
+        with open(list_file_path, 'w') as list_file, open(id_file_path, 'w') as id_file:
+            for root, _, files in os.walk(extracted_folder):
                 for file in files:
+                    file_path = os.path.join(root, file)
+                    list_file.write(file_path + '\n')
+
+                    # Extract ID between dots if applicable
                     file_parts = file.split('.')
                     if len(file_parts) >= 3:
-                        id_between_dots = file_parts[1]
-                        f.write(id_between_dots + '\n')
+                        id_file.write(file_parts[1] + '\n')
 
-        # Return the path to the extracted folder
-        return extracted_folder, list_file, id_file
+        return extracted_folder, list_file_path, id_file_path
+
     except Exception as e:
         print(f"Error in unzip_and_untar: {e}")
         sys.exit(1)
@@ -220,6 +224,8 @@ if __name__ == "__main__":
         print("Extraction completed. Extracted files are in:", extracted_folder)
         print("Contents list file:", list_file)
         print("ID list file:", id_file)
+       # print("✅ Extraction completed. Exiting program.")
+       # sys.exit(0)
 
         # Read file names from the extracted folder
         file_names = []
@@ -1023,9 +1029,9 @@ if np.size(ind) > 0:
         vcinfo = ncfile.createVariable('cycloneinfo', 'S1', ('cycloneinfo'))
 
     # Create variables
-    vstname = ncfile.createVariable('buoyID', 'S1', ('buoypoints'))
-    vlat = ncfile.createVariable('latitude', 'f4', ('buoypoints'))
-    vlon = ncfile.createVariable('longitude', 'f4', ('buoypoints'))
+    vstname = ncfile.createVariable('buoyID',np.dtype('a25'),('buoypoints'))
+    vlat = ncfile.createVariable('latitude',np.dtype('float32').char,('buoypoints'))
+    vlon = ncfile.createVariable('longitude',np.dtype('float32').char,('buoypoints'))
 
     if forecastds > 0:
         ncfile.createDimension('time', nmhs.shape[2])
